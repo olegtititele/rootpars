@@ -26,12 +26,6 @@ namespace Bot
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             botClient = new TelegramBotClient(Config.Bot_Token);
 
-            // DB.AddColumn();
-            // DB.DropUserTable();
-            // DB.DropBlacklistTable(5409089881);
-            // DB.DropBlacklistTable(5740336806);
-            // Console.WriteLine(DB.GetSellerRegDate(5409089881));
-            // DB.aaaa(5409089881);
             DB.CreateUsersTable();
             DB.UpdateStates();
             
