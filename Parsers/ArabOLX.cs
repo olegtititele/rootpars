@@ -78,11 +78,6 @@ namespace Parser
             var advertisements = document.DocumentNode.SelectNodes("//li[@aria-label=\"Listing\"]");
             if(advertisements != null)
             {
-                // int maxTasks = 20;
-                // using SemaphoreSlim semaphore = new SemaphoreSlim(maxTasks);
-                // List<Task> tasks = new List<Task>();
-
-
                 foreach (HtmlNode advertisement in advertisements)
                 {
                     
@@ -99,26 +94,17 @@ namespace Parser
                             
                             if(passedLinks.Contains(adLink))
                             {
-                                Console.WriteLine($"Уже пройдно: {adLink}");
                                 return;
                             }
                             else
                             {
                                 passedLinks.Add(adLink);
-                                Console.WriteLine($"Новая: {adLink}");
                                 if(!DB.CheckAdvestisement(userId, adLink))
                                 {
-                                    // await semaphore.WaitAsync();
-
-                                    // tasks.Add(Task.Run(async () =>
-                                    // {
-                                    // Console.WriteLine(adLink);
-                                        if(await ParsePageInfo(botClient, userId, adLink) == "RestartCategory")
-                                        {
-                                            return;
-                                        }
-                                        // semaphore.Release();
-                                    // }));
+                                    if(await ParsePageInfo(botClient, userId, adLink) == "RestartCategory")
+                                    {
+                                        return;
+                                    }
                                 }
                             }
                         }
@@ -130,11 +116,9 @@ namespace Parser
                         return;
                     }
                 }
-                // await Task.WhenAll(tasks);
                 
                 page++;
                 await ParseCategory(botClient, userId, page, passedLinks);
-                // await Task.WhenAll(tasks);
             }
         }
 
@@ -298,15 +282,6 @@ namespace Parser
                 adImage = errorImageUri;
             }
             
-            Console.WriteLine(adTitle);
-            Console.WriteLine(adPrice);
-            Console.WriteLine(adLocation);
-            // Console.WriteLine(adImage);
-            Console.WriteLine(adRegDate);
-            Console.WriteLine(sellerPhoneNumber);
-            Console.WriteLine(sellerName);
-            Console.WriteLine(sellerTotalAds);
-            Console.WriteLine(sellerRegDate);
             Functions.AddToBlacklist(userId, userPlatform!, adLink, sellerLink, sellerPhoneNumber);
 
             await SendLogToTg(botClient, userId, adLink, adTitle, adDescription, adPrice, adLocation, adImage, adRegDate, sellerPhoneNumber, sellerName, sellerLink, sellerTotalAds, sellerRegDate, sellerType);
