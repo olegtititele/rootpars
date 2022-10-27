@@ -27,11 +27,9 @@ namespace ConfigFile
 
         public static string SettingsText(long chatId)
         {
-            string text = $"⚒ Ваши настройки:\n\n<u><b>Текст для WhatsApp:</b></u> <code>{DB.GetWhatsappText(chatId)}</code>\n\n<u><b>Продавцов в ЧС:</b></u> <code>{DB.BlacklistLength(chatId)}</code>\n\n<u><b>Тайм-аут:</b></u> <code>{DB.GetTimeout(chatId)}</code>";
+            string text = $"⚒ Ваши настройки:\n\n<u><b>Текст для WhatsApp:</b></u> <code>{DB.GetWhatsappText(chatId)}</code>\n\n<u><b>Продавцов в ЧС:</b></u> <code>{DB.BlacklistLength(chatId)}</code>\n\n<u><b>Тайм-аут:</b></u> <code>{DB.GetTimeout(chatId)}</code>\n\n<u><b>Ссылок в ЧС:</b></u> <code>{DB.GetUserBlacklistLinks(chatId).Count()}</code>";
 
             return text;
         }
     }
 }
-
-// \n\n<u><b>Ссылок в ЧС:</b></u> <code>{DB.GetUserBlacklistLinks(chatId).Count()}</code>

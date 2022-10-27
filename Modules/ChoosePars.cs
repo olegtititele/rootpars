@@ -20,6 +20,14 @@ namespace Modules
                     new Thread(()=>ArabOLX.StartParsing(botClient, chatId, DateTime.Now)).Start();
                     load.Start();
                     break;
+                case "olx.com.bh":    
+                    new Thread(()=>ArabOLX.StartParsing(botClient, chatId, DateTime.Now)).Start();
+                    load.Start();
+                    break;
+                case "olx.com.kw":    
+                    new Thread(()=>ArabOLX.StartParsing(botClient, chatId, DateTime.Now)).Start();
+                    load.Start();
+                    break;
             }
         }
 

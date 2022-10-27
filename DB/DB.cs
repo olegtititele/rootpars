@@ -498,7 +498,6 @@ namespace PostgreSQL
             cmd.CommandText = $"CREATE TABLE IF NOT EXISTS blacklist{user_id} (platform TEXT, ad_link TEXT, seller_link TEXT, seller_phone TEXT)";
             cmd.ExecuteNonQuery();
             con.Close();
-            Console.WriteLine(22222);
         }
 
         public static void DropBlacklistTable(long user_id)
@@ -512,41 +511,64 @@ namespace PostgreSQL
             cmd.ExecuteNonQuery();
         }
 
-        // public static void CreateBlacklistLinksTable()
-        // {
-        //     using var con = new NpgsqlConnection(db_connection);
-        //     con.Open();
+        public static void CreateBlacklistLinksTable()
+        {
+            using var con = new NpgsqlConnection(db_connection);
+            con.Open();
 
-        //     using var cmd = new NpgsqlCommand();
-        //     cmd.Connection = con;
+            using var cmd = new NpgsqlCommand();
+            cmd.Connection = con;
 
-        //     cmd.CommandText = $"CREATE TABLE IF NOT EXISTS blacklist_links (user_id BIGINT PRIMARY KEY, link TEXT)";
-        //     cmd.ExecuteNonQuery();
-        //     con.Close();
-        // }
+            cmd.CommandText = $"CREATE TABLE IF NOT EXISTS blacklist_links (user_id BIGINT, link TEXT)";
+            cmd.ExecuteNonQuery();
+            con.Close();
+        }
 
-        // public static List<string> GetUserBlacklistLinks(long user_id)
-        // {
-        //     List<string> links= new List<string>();
-        //     using var con = new NpgsqlConnection(db_connection);
-        //     con.Open();
-
-
-        //     var sql = $"SELECT link FROM blacklist_links WHERE user_id = '{user_id}'";
-        //     using var cmd = new NpgsqlCommand(sql, con);
-        //     cmd.ExecuteNonQuery();
-        //     using (NpgsqlDataReader reader = cmd.ExecuteReader())
-        //     {
-        //         while (reader.Read())
-        //         {
-        //             links.Add(reader.GetString(0));
-        //         }
-        //         con.Close();
-        //         return links;
-        //     }
-        // }
+        public static List<string> GetUserBlacklistLinks(long user_id)
+        {
+            List<string> links= new List<string>();
+            using var con = new NpgsqlConnection(db_connection);
+            con.Open();
 
 
+            var sql = $"SELECT link FROM blacklist_links WHERE user_id = '{user_id}'";
+            using var cmd = new NpgsqlCommand(sql, con);
+            cmd.ExecuteNonQuery();
+            using (NpgsqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    links.Add(reader.GetString(0));
+                }
+                con.Close();
+                return links;
+            }
+        }
+
+        public static void InsertNewLink(long userId, string link)
+        {   
+            using var con = new NpgsqlConnection(db_connection);
+            con.Open();
+
+            using var cmd = new NpgsqlCommand();
+            cmd.Connection = con;
+            cmd.CommandText = $"INSERT INTO blacklist_links (user_id, link) VALUES (@user_id, @link)";
+            cmd.Parameters.AddWithValue("@user_id", userId);
+            cmd.Parameters.AddWithValue("@link", link);
+            
+            cmd.ExecuteNonQuery();  
+        }
+
+        public static void DeleteAllLinks(long userId)
+        {   
+            using var con = new NpgsqlConnection(db_connection);
+            con.Open();
+
+            using var cmd = new NpgsqlCommand();
+            cmd.Connection = con;
+            cmd.CommandText = $"DELETE FROM blacklist_links WHERE user_id = '{userId}'";
+            cmd.ExecuteNonQuery();  
+        }
 
 
         public static int BlacklistLength(long user_id)
@@ -600,29 +622,6 @@ namespace PostgreSQL
             }
         }
 
-
-        // public static List<string> aaaa(long user_id)
-        // {
-        //     List<string> links= new List<string>();
-        //     using var con = new NpgsqlConnection(db_connection);
-        //     con.Open();
-
-
-        //     var sql = $"SELECT seller_phone FROM blacklist{user_id}";
-        //     using var cmd = new NpgsqlCommand(sql, con);
-        //     cmd.ExecuteNonQuery();
-        //     using (NpgsqlDataReader reader = cmd.ExecuteReader())
-        //     {
-        //         while (reader.Read())
-        //         {
-        //             Console.WriteLine(reader.GetString(0));
-        //             // links.Add(reader.GetString(0));
-        //         }
-        //         con.Close();
-        //         return links;
-        //     }
-        // }
-        // 5409089881
 
         // public static bool CheckSellerlink(long user_id, string seller_link)
         // {

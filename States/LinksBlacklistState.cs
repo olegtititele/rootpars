@@ -15,14 +15,14 @@ namespace States
         {
             try
             {
-                if(callbackQuery.Data == "disable_seller_total_ads")
+                if(callbackQuery.Data == "delete_all_links")
                 {
-                    DB.UpdateSellerTotalAds(chatId, "Отключить");
+                    DB.DeleteAllLinks(chatId);
                     await botClient.EditMessageCaptionAsync(
                         chatId: chatId,
                         messageId: messageId,
-                        caption: $"<b>Фильтр \"Количество объялений продавца\" отключен.</b>",
-                        replyMarkup: Keyboards.BackToConfiguration,
+                        caption: $"<b>Все ссылки удалены.</b>",
+                        replyMarkup: Keyboards.BackToSettings,
                         parseMode: ParseMode.Html
                     );
                 }
@@ -46,43 +46,27 @@ namespace States
             {
                 FileStream fileStream = new FileStream(mainMenuPhoto, FileMode.Open, FileAccess.Read, FileShare.Read);
 
-                if(int.TryParse(messageText, out int number))
+                string[] blacklistLinks = messageText.Split(',');
+                int blacklistLinksCount = 0;
+                foreach(string blacklistLink in blacklistLinks)
                 {
-                    if(number >= 10 && number <= 30)
+                    if(!DB.GetUserBlacklistLinks(chatId).Contains(blacklistLink.Trim()))
                     {
-                        DB.UpdateTimeout(chatId, number);
-                        await botClient.SendPhotoAsync(
-                            chatId: chatId,
-                            photo: new InputOnlineFile(fileStream),
-                            caption: $"<b>Тайм-аут изменен на:</b> <code>{DB.GetTimeout(chatId)}</code>",
-                            parseMode: ParseMode.Html,
-                            replyMarkup: Keyboards.BackToSettings
-                        );
+                        DB.InsertNewLink(chatId, blacklistLink.Trim());
+                        blacklistLinksCount++;
+                    }
+                }
 
-                        string state = "MainMenu";
-                        DB.UpdateState(chatId, state);
-                    }
-                    else
-                    {
-                        await botClient.SendPhotoAsync(
-                            chatId: chatId,
-                            photo: new InputOnlineFile(fileStream),
-                            caption: "<b>❗️ Тайм-аут не должен быть меньше 10 секунд и превышать 30 секунд. Введите повторно.</b>",
-                            parseMode: ParseMode.Html,
-                            replyMarkup: Keyboards.BackToSettings
-                        ); 
-                    }
-                }
-                else
-                {
-                    await botClient.SendPhotoAsync(
-                        chatId: chatId,
-                        photo: new InputOnlineFile(fileStream),
-                        caption: "<b>❗️ Тайм-аут должен быть цифрой. Введите повторно.</b>",
-                        parseMode: ParseMode.Html,
-                        replyMarkup: Keyboards.BackToSettings
-                    );
-                }
+                await botClient.SendPhotoAsync(
+                    chatId: chatId,
+                    photo: new InputOnlineFile(fileStream),
+                    caption: $"<b>Добавлено новых ссылок:</b> <code>{blacklistLinksCount}</code>",
+                    parseMode: ParseMode.Html,
+                    replyMarkup: Keyboards.BackToSettings
+                );
+
+                string state = "MainMenu";
+                DB.UpdateState(chatId, state);
             }
             catch
             {

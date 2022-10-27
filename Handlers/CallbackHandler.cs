@@ -118,6 +118,9 @@ namespace Handlers
                     case "SellerRating":
                         SellerRatingState.CallBackHandler(botClient, callbackQuery, chatId, messageId);
                         return;
+                    case "LinksBlacklist":
+                        LinksBlacklistState.CallBackHandler(botClient, callbackQuery, chatId, messageId);
+                        return;
                 }
             }
             catch

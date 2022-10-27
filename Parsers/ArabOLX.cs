@@ -20,14 +20,16 @@ namespace Parser
         private static string? blacklist;
         private static string? parserCategory;
         private static DateTime exactTime;
-        private static string allCatLink = "https://www.olx.com.om/en/ads/";
+        private static string? domen;
+        private static string? currency;
+        private static string? telCode;
         private static string userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36";
         private static string errorImageUri = "https://upload.wikimedia.org/wikipedia/commons/9/9a/%D0%9D%D0%B5%D1%82_%D1%84%D0%BE%D1%82%D0%BE.png";
-        public static string[] blacklistCategories = {"https://www.olx.com.om/en/services/", "https://www.olx.com.om/en/vehicles/cars/", "https://www.olx.com.om/en/vehicles/motorcycles/", "https://www.olx.com.om/en/vehicles/boats/", "https://www.olx.com.om/en/vehicles/trucks/", "https://www.olx.com.om/en/vehicles/other-vehicles/", "https://www.olx.com.om/en/properties/", "https://www.olx.com.om/en/pets/", "https://www.olx.com.om/en/jobs-services/", "https://www.olx.com.om/en/business-industrial/", "https://www.olx.com.om/en/services/"};
+        private static List<string> blacklistCategories = new List<string>();
         private static HtmlWeb web = new HtmlWeb();
         
 
-        public static async void StartParsing(ITelegramBotClient botClient, long userId, DateTime userExactTime)
+        public static void StartParsing(ITelegramBotClient botClient, long userId, DateTime userExactTime)
         {
             exactTime = userExactTime;
             userPlatform = DB.GetPlatform(userId);
@@ -38,12 +40,37 @@ namespace Parser
             userSellerType = DB.GetSellerType(userId);
             blacklist = DB.GetBlackList(userId);
             parserCategory = DB.GetParserCategory(userId);
+            blacklistCategories = DB.GetUserBlacklistLinks(userId);
             int timeout = DB.GetTimeout(userId)*1000;
 
             web.UserAgent = userAgent;
 
             try
-            { 
+            {
+                switch(userPlatform)
+                {
+                    case "olx.qa":
+                        domen = "https://www.olx.qa";
+                        currency = "QAR";
+                        telCode = "974";
+                        break;
+                    case "olx.com.om":
+                        domen = "https://www.olx.com.om";
+                        currency = "OMR";
+                        telCode = "968";
+                        break;
+                    case "olx.com.bh":
+                        domen = "https://www.olx.com.bh";
+                        currency = "BHD";
+                        telCode = "973";
+                        break;
+                    case "olx.com.kw":
+                        domen = " https://www.olx.com.kw";
+                        currency = "KWD";
+                        telCode = "965";
+                        break;
+                }
+
                 List<string> passedLinks = new List<string>();
   
                 while(true)
@@ -51,25 +78,21 @@ namespace Parser
                     try
                     {
                         int page = 1;
+                        ParseCategory(botClient, userId, page, passedLinks);
+                    }
+                    catch{ }
 
-                        await ParseCategory(botClient, userId, page, passedLinks);
-                        System.Threading.Thread.Sleep(timeout);
-                    }
-                    catch
-                    {
-                        System.Threading.Thread.Sleep(timeout);
-                    }
+                    System.Threading.Thread.Sleep(timeout);
                 }
             }
-            catch(Exception e)
+            catch
             {
-                Console.WriteLine(e);
                 DB.UpdateParser(userId, "Stop");
                 return;
             }
         }
 
-        private static async Task ParseCategory(ITelegramBotClient botClient, long userId, int page, List<string> passedLinks)
+        private static void ParseCategory(ITelegramBotClient botClient, long userId, int page, List<string> passedLinks)
         {
             string adLink = "";
             string categoryLink = GenerateLink(page);
@@ -90,7 +113,7 @@ namespace Parser
                         }
                         catch
                         {
-                            adLink = "https://www.olx.com.om" + advertisement.SelectSingleNode(".//div[@class=\"ee2b0479\"]//a").GetAttributeValue("href", "");
+                            adLink = domen + advertisement.SelectSingleNode(".//div[@class=\"ee2b0479\"]//a").GetAttributeValue("href", "");
                             
                             if(passedLinks.Contains(adLink))
                             {
@@ -101,7 +124,7 @@ namespace Parser
                                 passedLinks.Add(adLink);
                                 if(!DB.CheckAdvestisement(userId, adLink))
                                 {
-                                    if(await ParsePageInfo(botClient, userId, adLink) == "RestartCategory")
+                                    if(!ParsePageInfo(botClient, userId, adLink))
                                     {
                                         return;
                                     }
@@ -116,13 +139,12 @@ namespace Parser
                         return;
                     }
                 }
-                
                 page++;
-                await ParseCategory(botClient, userId, page, passedLinks);
+                ParseCategory(botClient, userId, page, passedLinks);
             }
         }
 
-        static async Task<string> ParsePageInfo(ITelegramBotClient botClient, long userId, string adLink)
+        static bool ParsePageInfo(ITelegramBotClient botClient, long userId, string adLink)
         {
             string adCategory = "";
             string adPrice = "";
@@ -137,7 +159,7 @@ namespace Parser
             DateTime adRegDate = DateTime.Today;
             DateTime sellerRegDate = DateTime.Today;
 
-
+            
             HtmlDocument document = web.Load(adLink);
 
             var scripts = document.DocumentNode.SelectNodes("//script");
@@ -153,7 +175,7 @@ namespace Parser
                 }
             }
 
-            if(Functions.CheckAdRegDate(exactTime, adRegDate)){  }else{ return "RestartCategory"; }
+            if(Functions.CheckAdRegDate(exactTime, adRegDate)){  }else{ return false; }
 
             var categories = document.DocumentNode.SelectNodes("//li[@itemprop=\"itemListElement\"]");
             
@@ -161,11 +183,11 @@ namespace Parser
             {
                 try
                 {
-                    adCategory = "https://www.olx.com.om" + category.SelectSingleNode(".//a[@itemprop=\"item\"]").GetAttributeValue("href", "");
+                    adCategory = domen + category.SelectSingleNode(".//a[@itemprop=\"item\"]").GetAttributeValue("href", "");
 
                     if(blacklistCategories.Contains(adCategory))
                     {
-                        return "NextAdvertisement";
+                        return true;
                     }
                 }
                 catch
@@ -176,14 +198,14 @@ namespace Parser
             
             string adId = adLink.Split("ID")[1].Split('.')[0];
 
-            var sellerPhoneNumber = await GetPhoneNumber(adId);
+            var sellerPhoneNumber = GetPhoneNumber(adId).Result;
 
             if(sellerPhoneNumber == "null")
             {
-                return "NextAdvertisement";
+                return true;
             }
 
-            if(Functions.CheckBlacklistAds(userId, sellerPhoneNumber, blacklist!)){ }else{ return "NextAdvertisement"; }
+            if(Functions.CheckBlacklistAds(userId, sellerPhoneNumber, blacklist!)){ }else{ return true; }
 
 
             foreach (HtmlNode script in scripts)
@@ -197,7 +219,7 @@ namespace Parser
 
                     try
                     {
-                        adPrice = Functions.ConvertPrice(jObject["price"]!.ToString(), "OMR");
+                        adPrice = Functions.ConvertPrice(jObject["price"]!.ToString(), currency!);
                     }
                     catch
                     {
@@ -219,7 +241,7 @@ namespace Parser
                 }
             }
 
-            if(Functions.CheckSellerType(userSellerType!, sellerType)){ }else{ return "NextAdvertisement"; }
+            if(Functions.CheckSellerType(userSellerType!, sellerType)){ }else{ return true; }
 
             foreach (HtmlNode script in scripts)
             {
@@ -232,15 +254,14 @@ namespace Parser
 
                     var sellerProfile = jObject["sellerProfile"]!;
                     string sellerId = sellerProfile["data"]!["externalID"]!.ToString();
-                    sellerLink = $"https://www.olx.com.om/en/profile/{sellerId}";
-                    
+                    sellerLink = $"{domen}/en/profile/{sellerId}";
                     sellerName = sellerProfile["data"]!["name"]!.ToString();
                     sellerRegDate = Convert.ToDateTime(sellerProfile["data"]!["createdAt"]!.ToString());
                     break;
                 }
             }
 
-            if(Functions.CheckSellerRegDate(userSellerRegDate!, sellerRegDate)){ }else{ return "NextAdvertisement"; }
+            if(Functions.CheckSellerRegDate(userSellerRegDate!, sellerRegDate)){ }else{ return true; }
 
             try
             {
@@ -253,7 +274,7 @@ namespace Parser
                 sellerTotalAds = 1;
             }
 
-            if(Functions.CheckSellerTotalAds(userSellerTotalAds!, sellerTotalAds)){ }else{ return "NextAdvertisement"; }
+            if(Functions.CheckSellerTotalAds(userSellerTotalAds!, sellerTotalAds)){ }else{ return true; }
 
             try
             {
@@ -282,15 +303,17 @@ namespace Parser
                 adImage = errorImageUri;
             }
             
-            Functions.AddToBlacklist(userId, userPlatform!, adLink, sellerLink, sellerPhoneNumber);
+            
 
-            await SendLogToTg(botClient, userId, adLink, adTitle, adDescription, adPrice, adLocation, adImage, adRegDate, sellerPhoneNumber, sellerName, sellerLink, sellerTotalAds, sellerRegDate, sellerType);
-            return "NextAdvertisement";
+            SendLogToTg(botClient, userId, adLink, adTitle, adDescription, adPrice, adLocation, adImage, adRegDate, sellerPhoneNumber, sellerName, sellerLink, sellerTotalAds, sellerRegDate, sellerType);
+            return true;
         }
 
 
-        static async Task SendLogToTg(ITelegramBotClient botClient, long userId, string adLink, string adTitle, string adDescription, string adPrice, string adLocation, string adImage, DateTime adRegDate, string sellerPhoneNumber, string sellerName, string sellerLink, int sellerTotalAds, DateTime sellerRegDate, string sellerType)
+        static async void SendLogToTg(ITelegramBotClient botClient, long userId, string adLink, string adTitle, string adDescription, string adPrice, string adLocation, string adImage, DateTime adRegDate, string sellerPhoneNumber, string sellerName, string sellerLink, int sellerTotalAds, DateTime sellerRegDate, string sellerType)
         {
+            Functions.AddToBlacklist(userId, userPlatform!, adLink, sellerLink, sellerPhoneNumber);
+
             string whatsappText = LinkGenerator.GenerateWhatsAppText(DB.GetWhatsappText(userId), adLink, adTitle, adPrice, adLocation, sellerName);
 
             string adInfo = $"<b>📦 Название: </b><code>{adTitle}</code>\n<b>📞 Номер: </b><code>{sellerPhoneNumber}</code>\n<b>💲 Цена: </b>{adPrice}\n<b>🧔🏻 Продавец: </b><a href=\"{sellerLink}\">{sellerName}</a>\n\n<b>📅 Добавлено: </b><b>{adRegDate.ToString().Split(' ')[0]}</b> <code>{adRegDate.ToString().Split(' ')[1]}</code>\n<b>📝 Количество объявлений: </b><b>{sellerTotalAds}</b>\n<b>📆 Дата регистрации: </b><b>{sellerRegDate.ToString("dd.MM.yyyy")}</b>\n\n<b>🖨 Описание: </b>{adDescription}\n\n<a href=\"{adLink}\">Переход на объявление</a>\n<a href=\"https://api.whatsapp.com/send?phone={sellerPhoneNumber}&text={whatsappText}\">Написать WhatsApp</a>";
@@ -307,9 +330,8 @@ namespace Parser
                         parseMode: ParseMode.Html
                     );
                 }
-                catch(Exception e)
+                catch
                 {
-                    Console.WriteLine(e);
                     await botClient.SendPhotoAsync(
                         chatId: userId,
                         photo: errorImageUri,
@@ -318,9 +340,8 @@ namespace Parser
                     );
                 }
             }
-            catch(Exception e)
+            catch
             { 
-                Console.WriteLine(e);
                 return; 
             }
 
@@ -333,7 +354,7 @@ namespace Parser
         {
             try
             {
-                string link = $"https://www.olx.com.om/api/listing/{adId}/contactInfo/";
+                string link = $"{domen}/api/listing/{adId}/contactInfo/";
                     
                 HttpClient client = new HttpClient();
                 client.DefaultRequestHeaders.Add("User-Agent", userAgent);
@@ -353,13 +374,13 @@ namespace Parser
 
                 if(!phoneNumber.Contains("+"))
                 {
-                    if(phoneNumber.Substring(0, 3) == "968")
+                    if(phoneNumber.Substring(0, 3) == telCode)
                     {
                         phoneNumber = $"+{phoneNumber}";
                     }
                     else
                     {
-                        phoneNumber = $"+968{phoneNumber}";
+                        phoneNumber = $"+{telCode}{phoneNumber}";
                     }
                 }
 
@@ -376,14 +397,12 @@ namespace Parser
             string newLink = "";
 
             if(parserCategory == "all-categories")
-            {                    
-                newLink = $"https://www.olx.com.om/en/ads/?page={page}";
-                Console.WriteLine(newLink);
-                return newLink;
+            {
+                newLink = $"{domen}/en/ads/?page={page}";
             }
             else
             {
-                if(userLink!.Contains("https://www.olx.com.om/"))
+                if(userLink!.Contains(domen!))
                 {
                     if(userLink[^1] == '/')
                     {
@@ -393,14 +412,14 @@ namespace Parser
                     {
                         newLink = userLink + "/?page=" + page.ToString();
                     }
-                    return newLink;
                 }
                 else
                 {
-                    newLink = $"https://www.olx.com.om/ads/q-{userLink}/?page={page}";
-                    return newLink;
+                    newLink = $"https://www.olx.qa/ads/q-{userLink}/?page={page}";
                 }
-            }            
+            } 
+
+            return newLink;           
         }
     }
 }

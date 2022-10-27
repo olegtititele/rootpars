@@ -229,7 +229,7 @@ namespace States
                             messageId: messageId,
                             caption: text,
                             parseMode: ParseMode.Html,
-                            replyMarkup: Keyboards.BackToSettings
+                            replyMarkup: Keyboards.blacklistLinksKb
                         );
                         return;
                     case "back_from_pars":

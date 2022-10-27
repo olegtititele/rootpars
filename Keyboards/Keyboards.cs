@@ -231,6 +231,18 @@ namespace Bot_Keyboards
             }
         });
 
+        public static InlineKeyboardMarkup blacklistLinksKb = new(new []
+        {
+            new []
+            {
+                InlineKeyboardButton.WithCallbackData(text: "🗑 Удалить все ссылки", callbackData: "delete_all_links"),
+            },
+            new []
+            {
+                InlineKeyboardButton.WithCallbackData(text: "🔙 Назад", callbackData: "back_to_settings"),
+            },
+        });
+
 
         // PARSER
         public static InlineKeyboardMarkup StartPars = new(new []

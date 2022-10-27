@@ -24,7 +24,9 @@ namespace ConfigFile
         public static string bazar_sk_link = "https://pocitace.bazar.sk/";
         public static string bazos_pl_link = "https://telefon.bazos.pl/";
         public static string olx_qa_link = "https://www.olx.qa/mobile-phones-accessories/mobile-phones/";
-        public static string olx_com_om_link = "https://www.olx.com.om/mobile-phones-accessories/mobile-phones/";
+        public static string olx_com_om_link = "https://www.olx.com.om/en/mobile-phones-accessories/mobile-phones/";
+        public static string olx_com_kw_link = "https://www.olx.com.kw/en/mobile-phones-accessories/mobile-phones/";
+        public static string olx_com_bh_link = "https://www.olx.com.bh/en/mobile-phones-accessories/mobile-phones/";
         public static string list_am_link = "https://www.list.am/ru/category/11";
         public static string kijiji_ca_link = "https://www.kijiji.ca/b-cell-phone/ontario/c760l9004";
         public static string lajumate_ro_link = "https://lajumate.ro/anunturi_telefoane.html";
