@@ -4,7 +4,8 @@ namespace PostgreSQL
 {
     public static class DB
     {
-        private static string db_connection = DBConfig.db;
+        private static string db_connection = DBConfig.users_db;
+        private static string blacklist_db = DBConfig.blacklist_db;
 
         public static List<long> GetAllUsersId()
         {
@@ -489,7 +490,7 @@ namespace PostgreSQL
 
         public static void CreateBlackListTable(long user_id)
         {
-            using var con = new NpgsqlConnection(db_connection);
+            using var con = new NpgsqlConnection(blacklist_db);
             con.Open();
 
             using var cmd = new NpgsqlCommand();
@@ -500,16 +501,16 @@ namespace PostgreSQL
             con.Close();
         }
 
-        public static void DropBlacklistTable(long user_id)
-        {
-            using var con = new NpgsqlConnection(db_connection);
-            con.Open();
+        // public static void DropBlacklistTable(long user_id)
+        // {
+        //     using var con = new NpgsqlConnection(db_connection);
+        //     con.Open();
 
-            using var cmd = new NpgsqlCommand();
-            cmd.Connection = con;
-            cmd.CommandText = $"DROP TABLE blacklist{user_id}";
-            cmd.ExecuteNonQuery();
-        }
+        //     using var cmd = new NpgsqlCommand();
+        //     cmd.Connection = con;
+        //     cmd.CommandText = $"DROP TABLE blacklist{user_id}";
+        //     cmd.ExecuteNonQuery();
+        // }
 
         public static void CreateBlacklistLinksTable()
         {
@@ -573,7 +574,7 @@ namespace PostgreSQL
 
         public static int BlacklistLength(long user_id)
         {
-            using var con = new NpgsqlConnection(db_connection);
+            using var con = new NpgsqlConnection(blacklist_db);
             con.Open();
             var sql = $"SELECT DISTINCT seller_phone FROM blacklist{user_id}";
             using var cmd = new NpgsqlCommand(sql, con);
@@ -590,7 +591,7 @@ namespace PostgreSQL
         {
             try
             {
-                using var con = new NpgsqlConnection(db_connection);
+                using var con = new NpgsqlConnection(blacklist_db);
                 con.Open();
                 var sql = $"SELECT * FROM blacklist{user_id} WHERE ad_link = '{adLink}'";
                 using var cmd = new NpgsqlCommand(sql, con);
@@ -608,7 +609,7 @@ namespace PostgreSQL
         {
             try
             {
-                using var con = new NpgsqlConnection(db_connection);
+                using var con = new NpgsqlConnection(blacklist_db);
                 con.Open();
                 var sql = $"SELECT * FROM blacklist{user_id} WHERE seller_phone = '{sellerPhone}'";
                 using var cmd = new NpgsqlCommand(sql, con);
@@ -645,7 +646,7 @@ namespace PostgreSQL
 
         public static void AddAdvertisementToBlackList(long user_id, string platform, string adLink, string sellerLink, string phoneNumber)
         {
-            using var con = new NpgsqlConnection(db_connection);
+            using var con = new NpgsqlConnection(blacklist_db);
             con.Open();
             using var cmd = new NpgsqlCommand();
             cmd.Connection = con;
