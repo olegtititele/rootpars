@@ -6,7 +6,7 @@ namespace ConfigFile
 {
     public class Config
     {
-        public static string Bot_Token = "5468869887:AAFZxJ56xFQruSsu3bEsrEWFJ4OSEidTogM";
+        public static string Bot_Token = "5587205118:AAEO_tC99Tr8C74zZl64VBXsD1-3bP85NUE";
         public static string menuPhoto = "background.jpg";
         public static string warningPhoto = "warning.jpg";       
         public static string errorMessage = "Произошла неизвестная ошибка. Попробуйте еще раз.";
