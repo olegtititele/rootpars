@@ -28,7 +28,7 @@ namespace Bot
             
 //             DB.CreateBlackListTable(5740336806);
 //             DB.DropBlacklistTable(5740336806);
-            DB.TruncateBlacklistTable(5409089881);
+//             DB.TruncateBlacklistTable(5409089881);
             DB.CreateBlacklistLinksTable();
             DB.CreateUsersTable();
             DB.UpdateStates();
