@@ -25,7 +25,8 @@ namespace Bot
             ServicePointManager.Expect100Continue = true;
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             botClient = new TelegramBotClient(Config.Bot_Token);
-
+               
+            DB.DropBlacklistTable(5740336806);
             DB.CreateBlacklistLinksTable();
             DB.CreateUsersTable();
             DB.UpdateStates();
