@@ -501,16 +501,16 @@ namespace PostgreSQL
             con.Close();
         }
 
-        // public static void DropBlacklistTable(long user_id)
-        // {
-        //     using var con = new NpgsqlConnection(db_connection);
-        //     con.Open();
+        public static void DropBlacklistTable(long user_id)
+        {
+            using var con = new NpgsqlConnection(blacklist_db);
+            con.Open();
 
-        //     using var cmd = new NpgsqlCommand();
-        //     cmd.Connection = con;
-        //     cmd.CommandText = $"DROP TABLE blacklist{user_id}";
-        //     cmd.ExecuteNonQuery();
-        // }
+            using var cmd = new NpgsqlCommand();
+            cmd.Connection = con;
+            cmd.CommandText = $"DROP TABLE blacklist{user_id}";
+            cmd.ExecuteNonQuery();
+        }
 
         public static void CreateBlacklistLinksTable()
         {
