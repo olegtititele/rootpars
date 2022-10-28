@@ -69,6 +69,7 @@ namespace Parser
                         currency = "KWD";
                         telCode = "965";
                         break;
+
                 }
 
                 List<string> passedLinks = new List<string>();
@@ -162,21 +163,6 @@ namespace Parser
             
             HtmlDocument document = web.Load(adLink);
 
-            var scripts = document.DocumentNode.SelectNodes("//script");
-
-            foreach (HtmlNode script in scripts)
-            {
-                if(script.InnerHtml.Contains("priceValidUntil"))
-                {
-                    string json = script.InnerText;
-                    JObject jObject = JObject.Parse(json);
-                    adRegDate = Convert.ToDateTime(jObject["offers"]![0]!["priceValidUntil"]!.ToString()).AddDays(-30).AddHours(3);
-                    break;
-                }
-            }
-
-            if(Functions.CheckAdRegDate(exactTime, adRegDate)){  }else{ return false; }
-
             var categories = document.DocumentNode.SelectNodes("//li[@itemprop=\"itemListElement\"]");
             
             foreach(var category in categories)
@@ -184,9 +170,10 @@ namespace Parser
                 try
                 {
                     adCategory = domen + category.SelectSingleNode(".//a[@itemprop=\"item\"]").GetAttributeValue("href", "");
-
+                    Console.WriteLine(adCategory);
                     if(blacklistCategories.Contains(adCategory))
                     {
+                        Console.WriteLine("22222");
                         return true;
                     }
                 }
@@ -207,6 +194,20 @@ namespace Parser
 
             if(Functions.CheckBlacklistAds(userId, sellerPhoneNumber, blacklist!)){ }else{ return true; }
 
+            var scripts = document.DocumentNode.SelectNodes("//script");
+
+            foreach (HtmlNode script in scripts)
+            {
+                if(script.InnerHtml.Contains("priceValidUntil"))
+                {
+                    string json = script.InnerText;
+                    JObject jObject = JObject.Parse(json);
+                    adRegDate = Convert.ToDateTime(jObject["offers"]![0]!["priceValidUntil"]!.ToString()).AddDays(-30).AddHours(3);
+                    break;
+                }
+            }
+
+            if(Functions.CheckAdRegDate(exactTime, adRegDate)){  }else{ return false; }
 
             foreach (HtmlNode script in scripts)
             {
@@ -304,48 +305,42 @@ namespace Parser
             }
             
             
+            Functions.AddToBlacklist(userId, userPlatform!, adLink, sellerLink, sellerPhoneNumber);
 
             SendLogToTg(botClient, userId, adLink, adTitle, adDescription, adPrice, adLocation, adImage, adRegDate, sellerPhoneNumber, sellerName, sellerLink, sellerTotalAds, sellerRegDate, sellerType);
+
+            System.Threading.Thread.Sleep(2000);
+
             return true;
         }
 
 
         static async void SendLogToTg(ITelegramBotClient botClient, long userId, string adLink, string adTitle, string adDescription, string adPrice, string adLocation, string adImage, DateTime adRegDate, string sellerPhoneNumber, string sellerName, string sellerLink, int sellerTotalAds, DateTime sellerRegDate, string sellerType)
         {
-            Functions.AddToBlacklist(userId, userPlatform!, adLink, sellerLink, sellerPhoneNumber);
-
             string whatsappText = LinkGenerator.GenerateWhatsAppText(DB.GetWhatsappText(userId), adLink, adTitle, adPrice, adLocation, sellerName);
 
             string adInfo = $"<b>📦 Название: </b><code>{adTitle}</code>\n<b>📞 Номер: </b><code>{sellerPhoneNumber}</code>\n<b>💲 Цена: </b>{adPrice}\n<b>🧔🏻 Продавец: </b><a href=\"{sellerLink}\">{sellerName}</a>\n\n<b>📅 Добавлено: </b><b>{adRegDate.ToString().Split(' ')[0]}</b> <code>{adRegDate.ToString().Split(' ')[1]}</code>\n<b>📝 Количество объявлений: </b><b>{sellerTotalAds}</b>\n<b>📆 Дата регистрации: </b><b>{sellerRegDate.ToString("dd.MM.yyyy")}</b>\n\n<b>🖨 Описание: </b>{adDescription}\n\n<a href=\"{adLink}\">Переход на объявление</a>\n<a href=\"https://api.whatsapp.com/send?phone={sellerPhoneNumber}&text={whatsappText}\">Написать WhatsApp</a>";
 
-
             try
             {
-                try
-                {
-                    await botClient.SendPhotoAsync(
-                        chatId: userId,
-                        photo: adImage,
-                        caption: adInfo,
-                        parseMode: ParseMode.Html
-                    );
-                }
-                catch
-                {
-                    await botClient.SendPhotoAsync(
-                        chatId: userId,
-                        photo: errorImageUri,
-                        caption: adInfo,
-                        parseMode: ParseMode.Html
-                    );
-                }
+                await botClient.SendPhotoAsync(
+                    chatId: userId,
+                    photo: adImage,
+                    caption: adInfo,
+                    parseMode: ParseMode.Html
+                );
             }
             catch
-            { 
-                return; 
+            {
+                await botClient.SendPhotoAsync(
+                    chatId: userId,
+                    photo: errorImageUri,
+                    caption: adInfo,
+                    parseMode: ParseMode.Html
+                );
             }
 
-            System.Threading.Thread.Sleep(2000);
+            return;
         }
        
 
