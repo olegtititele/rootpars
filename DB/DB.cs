@@ -501,7 +501,7 @@ namespace PostgreSQL
             con.Close();
         }
 
-        public static void DropBlacklistTable(long user_id)
+        public static void TruncateBlacklistTable(long user_id)
         {
             using var con = new NpgsqlConnection(blacklist_db);
             con.Open();
