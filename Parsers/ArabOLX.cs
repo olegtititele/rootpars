@@ -65,7 +65,7 @@ namespace Parser
                         telCode = "973";
                         break;
                     case "olx.com.kw":
-                        domen = " https://www.olx.com.kw";
+                        domen = "https://www.olx.com.kw";
                         currency = "KWD";
                         telCode = "965";
                         break;
@@ -165,26 +165,44 @@ namespace Parser
 
             var categories = document.DocumentNode.SelectNodes("//li[@itemprop=\"itemListElement\"]");
             
-            foreach(var blacklistCategory in blacklistCategories)
+            
+            foreach(var category in categories)
             {
-                foreach(var category in categories)
+                try
                 {
-                    try
-                    {
-                        adCategory = domen + category.SelectSingleNode(".//a[@itemprop=\"item\"]").GetAttributeValue("href", "").Trim();
+                    adCategory = domen + category.SelectSingleNode(".//a[@itemprop=\"item\"]").GetAttributeValue("href", "");
 
-                        if(adCategory == blacklistCategory)
-                        {
-                            Console.WriteLine("222222");
-                            return true;
-                        }
-                    }
-                    catch
+                    if(blacklistCategories.Contains(adCategory))
                     {
-                        continue;
+                        return true;
                     }
                 }
+                catch
+                {
+                    continue;
+                }
             }
+            
+            
+//             foreach(var blacklistCategory in blacklistCategories)
+//             {
+//                 foreach(var category in categories)
+//                 {
+//                     try
+//                     {
+//                         adCategory = domen + category.SelectSingleNode(".//a[@itemprop=\"item\"]").GetAttributeValue("href", "").Trim();
+
+//                         if(adCategory == blacklistCategory)
+//                         {
+//                             return true;
+//                         }
+//                     }
+//                     catch
+//                     {
+//                         continue;
+//                     }
+//                 }
+//             }
             
             string adId = adLink.Split("ID")[1].Split('.')[0];
 
