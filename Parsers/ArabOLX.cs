@@ -165,15 +165,19 @@ namespace Parser
 
             var categories = document.DocumentNode.SelectNodes("//li[@itemprop=\"itemListElement\"]");
             
+            foreach(var category in blacklistCategories)
+            {
+                Console.WriteLine($"ЧС: {category}");
+            }
+            
             foreach(var category in categories)
             {
                 try
                 {
                     adCategory = domen + category.SelectSingleNode(".//a[@itemprop=\"item\"]").GetAttributeValue("href", "");
-                    Console.WriteLine(adCategory);
+                    Console.WriteLine($"Обявление: {adCategory}");
                     if(blacklistCategories.Contains(adCategory))
                     {
-                        Console.WriteLine("22222");
                         return true;
                     }
                 }
@@ -319,7 +323,7 @@ namespace Parser
         {
             string whatsappText = LinkGenerator.GenerateWhatsAppText(DB.GetWhatsappText(userId), adLink, adTitle, adPrice, adLocation, sellerName);
 
-            string adInfo = $"<b>📦 Название: </b><code>{adTitle}</code>\n<b>📞 Номер: </b><code>{sellerPhoneNumber}</code>\n<b>💲 Цена: </b>{adPrice}\n<b>🧔🏻 Продавец: </b><a href=\"{sellerLink}\">{sellerName}</a>\n\n<b>📅 Добавлено: </b><b>{adRegDate.ToString().Split(' ')[0]}</b> <code>{adRegDate.ToString().Split(' ')[1]}</code>\n<b>📝 Количество объявлений: </b><b>{sellerTotalAds}</b>\n<b>📆 Дата регистрации: </b><b>{sellerRegDate.ToString("dd.MM.yyyy")}</b>\n\n<b>🖨 Описание: </b>{adDescription}\n\n<a href=\"{adLink}\">Переход на объявление</a>\n<a href=\"https://api.whatsapp.com/send?phone={sellerPhoneNumber}&text={whatsappText}\">Написать WhatsApp</a>";
+            string adInfo = $"{adLink}\n\n{sellerLink}<b>📦 Название: </b><code>{adTitle}</code>\n<b>📞 Номер: </b><code>{sellerPhoneNumber}</code>\n<b>💲 Цена: </b>{adPrice}\n<b>🧔🏻 Продавец: </b><a href=\"{sellerLink}\">{sellerName}</a>\n\n<b>📅 Добавлено: </b><b>{adRegDate.ToString().Split(' ')[0]}</b> <code>{adRegDate.ToString().Split(' ')[1]}</code>\n<b>📝 Количество объявлений: </b><b>{sellerTotalAds}</b>\n<b>📆 Дата регистрации: </b><b>{sellerRegDate.ToString("dd.MM.yyyy")}</b>\n\n<b>🖨 Описание: </b>{adDescription}\n\n<a href=\"{adLink}\">Переход на объявление</a>\n<a href=\"https://api.whatsapp.com/send?phone={sellerPhoneNumber}&text={whatsappText}\">Написать WhatsApp</a>";
 
             try
             {
