@@ -508,7 +508,7 @@ namespace PostgreSQL
 
             using var cmd = new NpgsqlCommand();
             cmd.Connection = con;
-            cmd.CommandText = $"DROP TABLE blacklist{user_id}";
+            cmd.CommandText = $"TRUNCATE TABLE blacklist{user_id}";
             cmd.ExecuteNonQuery();
         }
 
