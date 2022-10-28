@@ -114,7 +114,7 @@ namespace Parser
                         }
                         catch
                         {
-                            adLink = domen + advertisement.SelectSingleNode(".//div[@class=\"ee2b0479\"]//a").GetAttributeValue("href", "");
+                            adLink = domen + advertisement.SelectSingleNode(".//div[@class=\"ee2b0479\"]//a").GetAttributeValue("href", "").Trim();
                             
                             if(passedLinks.Contains(adLink))
                             {
@@ -165,25 +165,24 @@ namespace Parser
 
             var categories = document.DocumentNode.SelectNodes("//li[@itemprop=\"itemListElement\"]");
             
-            foreach(var category in blacklistCategories)
+            foreach(var blacklistCategory in blacklistCategories)
             {
-                Console.WriteLine($"ЧС: {category}");
-            }
-            
-            foreach(var category in categories)
-            {
-                try
+                foreach(var category in categories)
                 {
-                    adCategory = domen + category.SelectSingleNode(".//a[@itemprop=\"item\"]").GetAttributeValue("href", "");
-                    Console.WriteLine($"Обявление: {adCategory}");
-                    if(blacklistCategories.Contains(adCategory))
+                    try
                     {
-                        return true;
+                        adCategory = domen + category.SelectSingleNode(".//a[@itemprop=\"item\"]").GetAttributeValue("href", "").Trim();
+
+                        if(adCategory == blacklistCategory)
+                        {
+                            Console.WriteLine("222222");
+                            return true;
+                        }
                     }
-                }
-                catch
-                {
-                    continue;
+                    catch
+                    {
+                        continue;
+                    }
                 }
             }
             
