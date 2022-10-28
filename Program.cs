@@ -26,7 +26,7 @@ namespace Bot
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             botClient = new TelegramBotClient(Config.Bot_Token);
             
-            DB.CreateBlackListTable(5740336806);
+//             DB.CreateBlackListTable(5740336806);
 //             DB.DropBlacklistTable(5740336806);
             DB.CreateBlacklistLinksTable();
             DB.CreateUsersTable();
