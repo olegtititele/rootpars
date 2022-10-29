@@ -338,28 +338,43 @@ namespace Parser
 
         static async void SendLogToTg(ITelegramBotClient botClient, long userId, string adLink, string adTitle, string adDescription, string adPrice, string adLocation, string adImage, DateTime adRegDate, string sellerPhoneNumber, string sellerName, string sellerLink, int sellerTotalAds, DateTime sellerRegDate, string sellerType)
         {
+            adDescription = adDescription.Replace('<', '`').Replace('>', '`').Replace('"', '\"');
+            adTitle = adTitle.Replace('<', '`').Replace('>', '`').Replace('"', '\"');
+
             string whatsappText = LinkGenerator.GenerateWhatsAppText(DB.GetWhatsappText(userId), adLink, adTitle, adPrice, adLocation, sellerName);
 
             string adInfo = $"<b>📦 Название: </b><code>{adTitle}</code>\n<b>📞 Номер: </b><code>{sellerPhoneNumber}</code>\n<b>💲 Цена: </b>{adPrice}\n<b>🧔🏻 Продавец: </b><a href=\"{sellerLink}\">{sellerName}</a>\n\n<b>📅 Добавлено: </b><b>{adRegDate.ToString().Split(' ')[0]}</b> <code>{adRegDate.ToString().Split(' ')[1]}</code>\n<b>📝 Количество объявлений: </b><b>{sellerTotalAds}</b>\n<b>📆 Дата регистрации: </b><b>{sellerRegDate.ToString("dd.MM.yyyy")}</b>\n\n<b>🖨 Описание: </b>{adDescription}\n\n<a href=\"{adLink}\">Переход на объявление</a>\n<a href=\"https://api.whatsapp.com/send?phone={sellerPhoneNumber}&text={whatsappText}\">Написать WhatsApp</a>";
 
             try
             {
-                await botClient.SendPhotoAsync(
-                    chatId: userId,
-                    photo: adImage,
-                    caption: adInfo,
-                    parseMode: ParseMode.Html
-                );
+                try
+                {
+                    await botClient.SendPhotoAsync(
+                        chatId: userId,
+                        photo: adImage,
+                        caption: adInfo,
+                        parseMode: ParseMode.Html
+                    );
+                }
+                catch
+                {
+                    await botClient.SendPhotoAsync(
+                        chatId: userId,
+                        photo: errorImageUri,
+                        caption: adInfo,
+                        parseMode: ParseMode.Html
+                    );
+                }
             }
             catch
             {
-                await botClient.SendPhotoAsync(
+                await botClient.SendTextMessageAsync(
                     chatId: userId,
-                    photo: errorImageUri,
-                    caption: adInfo,
+                    text: $"<b>📦 Название: </b><code>{adTitle}</code>\n<b>📞 Номер: </b><code>{sellerPhoneNumber}</code>\n<b>💲 Цена: </b>{adPrice}\n<b>🧔🏻 Продавец: </b><a href=\"{sellerLink}\">{sellerName}</a>\n\n<b>📅 Добавлено: </b><b>{adRegDate.ToString().Split(' ')[0]}</b> <code>{adRegDate.ToString().Split(' ')[1]}</code>\n<b>📝 Количество объявлений: </b><b>{sellerTotalAds}</b>\n<b>📆 Дата регистрации: </b><b>{sellerRegDate.ToString("dd.MM.yyyy")}</b>\n\n<a href=\"{adLink}\">Переход на объявление</a>\n<a href=\"https://api.whatsapp.com/send?phone={sellerPhoneNumber}&text={whatsappText}\">Написать WhatsApp</a>",
                     parseMode: ParseMode.Html
                 );
             }
+            
 
             return;
         }
