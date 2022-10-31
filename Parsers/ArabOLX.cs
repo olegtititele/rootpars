@@ -296,7 +296,7 @@ namespace Parser
                 sellerTotalAds = 1;
             }
 
-            if(Functions.CheckSellerTotalAds(userSellerTotalAds!, sellerTotalAds)){ }else{ return true; }
+            if(Functions.CheckSellerTotalAds(userSellerTotalAds!, sellerTotalAds)){ Console.WriteLine($"Прошло{userSellerTotalAds} {sellerTotalAds}"); }else{ Console.WriteLine($"Нет {userSellerTotalAds} {sellerTotalAds}"); return true; }
 
             try
             {
