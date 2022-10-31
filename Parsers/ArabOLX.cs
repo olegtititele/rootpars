@@ -264,6 +264,8 @@ namespace Parser
                 sellerTotalAds = 1;
             }
             
+            Console.WriteLine($"{userSellerTotalAds}   {sellerTotalAds}");
+            
             if(Functions.CheckSellerTotalAds(userSellerTotalAds, sellerTotalAds)){  }else{ return true; }
             
             try
