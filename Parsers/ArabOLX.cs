@@ -13,11 +13,12 @@ namespace Parser
     {
         private static string userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36";
         private static string errorImageUri = "https://upload.wikimedia.org/wikipedia/commons/9/9a/%D0%9D%D0%B5%D1%82_%D1%84%D0%BE%D1%82%D0%BE.png";
-        private static HtmlWeb web = new HtmlWeb();
         
 
-        public static void StartParsing(ITelegramBotClient botClient, long userId, DateTime exactTime)
+        public static void StartParsing(ITelegramBotClient botClient, long userId, DateTime userExactTime)
         {
+            HtmlWeb web = new HtmlWeb();
+            DateTime exactTime = userExactTime;
             string userPlatform = DB.GetPlatform(userId);
             string userLink = DB.GetLink(userId);
             string userSellerTotalAds = DB.GetSellerTotalAds(userId);
@@ -68,7 +69,7 @@ namespace Parser
                     try
                     {
                         int page = 1;
-                        ParseCategory(botClient, userId, page, passedLinks, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode);
+                        ParseCategory(web, botClient, userId, page, passedLinks, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode);
                     }
                     catch{ }
 
@@ -82,7 +83,7 @@ namespace Parser
             }
         }
 
-        private static void ParseCategory(ITelegramBotClient botClient, long userId, int page, List<string> passedLinks, DateTime exactTime, string userPlatform, string userLink, string userSellerTotalAds, string userSellerRegDate, decimal userSellerRating, string userSellerType, string blacklist, string parserCategory, List<string> blacklistCategories, string domen, string currency, string telCode)
+        private static void ParseCategory(HtmlWeb web, ITelegramBotClient botClient, long userId, int page, List<string> passedLinks, DateTime exactTime, string userPlatform, string userLink, string userSellerTotalAds, string userSellerRegDate, decimal userSellerRating, string userSellerType, string blacklist, string parserCategory, List<string> blacklistCategories, string domen, string currency, string telCode)
         {
             string adLink = "";
             string categoryLink = GenerateLink(page, parserCategory, domen, userLink);
@@ -115,7 +116,7 @@ namespace Parser
                                 passedLinks.Add(adLink);
                                 if(!DB.CheckAdvestisement(userId, adLink))
                                 {
-                                    if(!ParsePageInfo(botClient, userId, adLink, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode))
+                                    if(!ParsePageInfo(web, botClient, userId, adLink, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode))
                                     {
                                         return;
                                     }
@@ -131,11 +132,11 @@ namespace Parser
                     }
                 }
                 page++;
-                ParseCategory(botClient, userId, page, passedLinks, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode);
+                ParseCategory(web, botClient, userId, page, passedLinks, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode);
             }
         }
 
-        static bool ParsePageInfo(ITelegramBotClient botClient, long userId, string adLink, DateTime exactTime, string userPlatform, string userLink, string userSellerTotalAds, string userSellerRegDate, decimal userSellerRating, string userSellerType, string blacklist, string parserCategory, List<string> blacklistCategories, string domen, string currency, string telCode)
+        static bool ParsePageInfo(HtmlWeb web, ITelegramBotClient botClient, long userId, string adLink, DateTime exactTime, string userPlatform, string userLink, string userSellerTotalAds, string userSellerRegDate, decimal userSellerRating, string userSellerType, string blacklist, string parserCategory, List<string> blacklistCategories, string domen, string currency, string telCode)
         {
             string adCategory = "";
             string adPrice = "";
@@ -263,9 +264,8 @@ namespace Parser
                 sellerTotalAds = 1;
             }
             
-            Console.WriteLine($"{userSellerTotalAds}   {sellerTotalAds}");
-            
             if(Functions.CheckSellerTotalAds(userSellerTotalAds, sellerTotalAds)){  }else{ return true; }
+
             
             try
             {
