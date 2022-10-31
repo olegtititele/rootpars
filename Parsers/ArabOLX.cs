@@ -15,10 +15,11 @@ namespace Parser
         private static string errorImageUri = "https://upload.wikimedia.org/wikipedia/commons/9/9a/%D0%9D%D0%B5%D1%82_%D1%84%D0%BE%D1%82%D0%BE.png";
         
 
-        public static void StartParsing(ITelegramBotClient botClient, long userId, DateTime userExactTime)
+        public static void StartParsing(ITelegramBotClient botClient, long userId, DateTime exactTime)
         {
             HtmlWeb web = new HtmlWeb();
-            DateTime exactTime = userExactTime;
+            web.UserAgent = userAgent;
+            
             string userPlatform = DB.GetPlatform(userId);
             string userLink = DB.GetLink(userId);
             string userSellerTotalAds = DB.GetSellerTotalAds(userId);
@@ -28,8 +29,7 @@ namespace Parser
             string blacklist = DB.GetBlackList(userId);
             string parserCategory = DB.GetParserCategory(userId);
             List<string> blacklistCategories = DB.GetUserBlacklistLinks(userId);
-            int timeout = DB.GetTimeout(userId)*1000;
-            web.UserAgent = userAgent;
+            int timeout = DB.GetTimeout(userId)*1000; 
 
             try
             {
