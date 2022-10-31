@@ -11,42 +11,32 @@ namespace Parser
 {
     public class ArabOLX
     {
-        private static string? userPlatform;
-        private static string? userLink;
-        private static string? userSellerTotalAds;
-        private static string? userSellerRegDate;
-        private static decimal userSellerRating;
-        private static string? userSellerType;
-        private static string? blacklist;
-        private static string? parserCategory;
-        private static DateTime exactTime;
-        private static string? domen;
-        private static string? currency;
-        private static string? telCode;
         private static string userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36";
         private static string errorImageUri = "https://upload.wikimedia.org/wikipedia/commons/9/9a/%D0%9D%D0%B5%D1%82_%D1%84%D0%BE%D1%82%D0%BE.png";
-        private static List<string> blacklistCategories = new List<string>();
         private static HtmlWeb web = new HtmlWeb();
         
 
         public static void StartParsing(ITelegramBotClient botClient, long userId, DateTime userExactTime)
         {
-            exactTime = userExactTime;
-            userPlatform = DB.GetPlatform(userId);
-            userLink = DB.GetLink(userId);
-            userSellerTotalAds = DB.GetSellerTotalAds(userId);
-            userSellerRegDate = DB.GetSellerRegDate(userId);
-            userSellerRating = DB.GetSellerRating(userId);
-            userSellerType = DB.GetSellerType(userId);
-            blacklist = DB.GetBlackList(userId);
-            parserCategory = DB.GetParserCategory(userId);
-            blacklistCategories = DB.GetUserBlacklistLinks(userId);
+            DateTime exactTime = userExactTime.AddDays(-30);
+            string userPlatform = DB.GetPlatform(userId);
+            string userLink = DB.GetLink(userId);
+            string userSellerTotalAds = DB.GetSellerTotalAds(userId);
+            string userSellerRegDate = DB.GetSellerRegDate(userId);
+            decimal userSellerRating = DB.GetSellerRating(userId);
+            string userSellerType = DB.GetSellerType(userId);
+            string blacklist = DB.GetBlackList(userId);
+            string parserCategory = DB.GetParserCategory(userId);
+            List<string> blacklistCategories = DB.GetUserBlacklistLinks(userId);
             int timeout = DB.GetTimeout(userId)*1000;
-
             web.UserAgent = userAgent;
 
             try
             {
+                string domen = "";
+                string currency = "";
+                string telCode = "";
+
                 switch(userPlatform)
                 {
                     case "olx.qa":
@@ -79,7 +69,7 @@ namespace Parser
                     try
                     {
                         int page = 1;
-                        ParseCategory(botClient, userId, page, passedLinks);
+                        ParseCategory(botClient, userId, page, passedLinks, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode);
                     }
                     catch{ }
 
@@ -93,10 +83,10 @@ namespace Parser
             }
         }
 
-        private static void ParseCategory(ITelegramBotClient botClient, long userId, int page, List<string> passedLinks)
+        private static void ParseCategory(ITelegramBotClient botClient, long userId, int page, List<string> passedLinks, DateTime exactTime, string userPlatform, string userLink, string userSellerTotalAds, string userSellerRegDate, decimal userSellerRating, string userSellerType, string blacklist, string parserCategory, List<string> blacklistCategories, string domen, string currency, string telCode)
         {
             string adLink = "";
-            string categoryLink = GenerateLink(page);
+            string categoryLink = GenerateLink(page, parserCategory, domen, userLink);
             HtmlDocument document = web.Load(categoryLink);
                     
             var advertisements = document.DocumentNode.SelectNodes("//li[@aria-label=\"Listing\"]");
@@ -114,18 +104,19 @@ namespace Parser
                         }
                         catch
                         {
-                            adLink = domen + advertisement.SelectSingleNode(".//div[@class=\"ee2b0479\"]//a").GetAttributeValue("href", "").Trim();
+                            adLink = domen + advertisement.SelectSingleNode(".//div[@class=\"ee2b0479\"]//a").GetAttributeValue("href", "");
                             
                             if(passedLinks.Contains(adLink))
                             {
                                 return;
                             }
+                            
                             else
                             {
                                 passedLinks.Add(adLink);
                                 if(!DB.CheckAdvestisement(userId, adLink))
                                 {
-                                    if(!ParsePageInfo(botClient, userId, adLink))
+                                    if(!ParsePageInfo(botClient, userId, adLink, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode))
                                     {
                                         return;
                                     }
@@ -141,11 +132,11 @@ namespace Parser
                     }
                 }
                 page++;
-                ParseCategory(botClient, userId, page, passedLinks);
+                ParseCategory(botClient, userId, page, passedLinks, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode);
             }
         }
 
-        static bool ParsePageInfo(ITelegramBotClient botClient, long userId, string adLink)
+        static bool ParsePageInfo(ITelegramBotClient botClient, long userId, string adLink, DateTime exactTime, string userPlatform, string userLink, string userSellerTotalAds, string userSellerRegDate, decimal userSellerRating, string userSellerType, string blacklist, string parserCategory, List<string> blacklistCategories, string domen, string currency, string telCode)
         {
             string adCategory = "";
             string adPrice = "";
@@ -165,13 +156,11 @@ namespace Parser
 
             var categories = document.DocumentNode.SelectNodes("//li[@itemprop=\"itemListElement\"]");
             
-            
             foreach(var category in categories)
             {
                 try
                 {
                     adCategory = domen + category.SelectSingleNode(".//a[@itemprop=\"item\"]").GetAttributeValue("href", "");
-
                     if(blacklistCategories.Contains(adCategory))
                     {
                         return true;
@@ -183,37 +172,16 @@ namespace Parser
                 }
             }
             
-            
-//             foreach(var blacklistCategory in blacklistCategories)
-//             {
-//                 foreach(var category in categories)
-//                 {
-//                     try
-//                     {
-//                         adCategory = domen + category.SelectSingleNode(".//a[@itemprop=\"item\"]").GetAttributeValue("href", "").Trim();
-
-//                         if(adCategory == blacklistCategory)
-//                         {
-//                             return true;
-//                         }
-//                     }
-//                     catch
-//                     {
-//                         continue;
-//                     }
-//                 }
-//             }
-            
             string adId = adLink.Split("ID")[1].Split('.')[0];
 
-            var sellerPhoneNumber = GetPhoneNumber(adId).Result;
+            var sellerPhoneNumber = GetPhoneNumber(adId, domen, telCode).Result;
 
             if(sellerPhoneNumber == "null")
             {
                 return true;
             }
 
-            if(Functions.CheckBlacklistAds(userId, sellerPhoneNumber, blacklist!)){ }else{ return true; }
+            if(Functions.CheckBlacklistAds(userId, sellerPhoneNumber, blacklist)){ }else{ return true; }
 
             var scripts = document.DocumentNode.SelectNodes("//script");
 
@@ -241,7 +209,7 @@ namespace Parser
 
                     try
                     {
-                        adPrice = Functions.ConvertPrice(jObject["price"]!.ToString(), currency!);
+                        adPrice = Functions.ConvertPrice(jObject["price"]!.ToString(), currency);
                     }
                     catch
                     {
@@ -263,7 +231,7 @@ namespace Parser
                 }
             }
 
-            if(Functions.CheckSellerType(userSellerType!, sellerType)){ }else{ return true; }
+            if(Functions.CheckSellerType(userSellerType, sellerType)){ }else{ return true; }
 
             foreach (HtmlNode script in scripts)
             {
@@ -283,7 +251,7 @@ namespace Parser
                 }
             }
 
-            if(Functions.CheckSellerRegDate(userSellerRegDate!, sellerRegDate)){ }else{ return true; }
+            if(Functions.CheckSellerRegDate(userSellerRegDate, sellerRegDate)){ }else{ return true; }
 
             try
             {
@@ -295,9 +263,9 @@ namespace Parser
             {
                 sellerTotalAds = 1;
             }
-
-            if(Functions.CheckSellerTotalAds(userSellerTotalAds!, sellerTotalAds)){ Console.WriteLine($"Прошло{userSellerTotalAds} {sellerTotalAds}"); }else{ Console.WriteLine($"Нет {userSellerTotalAds} {sellerTotalAds}"); return true; }
-
+            
+            if(Functions.CheckSellerTotalAds(userSellerTotalAds, sellerTotalAds)){  }else{ return true; }
+            
             try
             {
                 adDescription = document.DocumentNode.SelectSingleNode("//div[@class=\"_0f86855a\"]//span").InnerText;
@@ -381,7 +349,7 @@ namespace Parser
        
 
 
-        static async Task<String> GetPhoneNumber(string adId)
+        static async Task<String> GetPhoneNumber(string adId, string domen, string telCode)
         {
             try
             {
@@ -423,7 +391,7 @@ namespace Parser
             }
         }
 
-        static string GenerateLink(int page)
+        static string GenerateLink(int page, string parserCategory, string domen, string userLink)
         {
             string newLink = "";
 
