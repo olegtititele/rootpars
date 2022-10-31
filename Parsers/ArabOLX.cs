@@ -16,9 +16,8 @@ namespace Parser
         private static HtmlWeb web = new HtmlWeb();
         
 
-        public static void StartParsing(ITelegramBotClient botClient, long userId, DateTime userExactTime)
+        public static void StartParsing(ITelegramBotClient botClient, long userId, DateTime exactTime)
         {
-            DateTime exactTime = userExactTime.AddDays(-30);
             string userPlatform = DB.GetPlatform(userId);
             string userLink = DB.GetLink(userId);
             string userSellerTotalAds = DB.GetSellerTotalAds(userId);
