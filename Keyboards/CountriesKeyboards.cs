@@ -15,8 +15,8 @@ namespace Bot_Keyboards
 //             },
             new []
             {
-                InlineKeyboardButton.WithCallbackData(text: "🇧🇭 olx.com.bh 🇧🇭", callbackData: "olx.com.bh"),
-//                 InlineKeyboardButton.WithCallbackData(text: "🇰🇼 olx.com.kw 🇰🇼", callbackData: "olx.com.kw"),
+//                 InlineKeyboardButton.WithCallbackData(text: "🇧🇭 olx.com.bh 🇧🇭", callbackData: "olx.com.bh"),
+                InlineKeyboardButton.WithCallbackData(text: "🇰🇼 olx.com.kw 🇰🇼", callbackData: "olx.com.kw"),
             },
 
             // new []
