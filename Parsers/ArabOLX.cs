@@ -264,6 +264,10 @@ namespace Parser
                 sellerTotalAds = 1;
             }
             
+            Console.WriteLine(userSellerTotalAds);
+            Console.WriteLine("\n");
+            Console.WriteLine(sellerTotalAds);
+            
             if(Functions.CheckSellerTotalAds(userSellerTotalAds, sellerTotalAds)){  }else{ return true; }
 
             
