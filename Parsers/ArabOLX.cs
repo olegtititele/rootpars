@@ -2,6 +2,7 @@ using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.InputFiles;
 
 
 using Modules;
@@ -13,13 +14,10 @@ namespace Parser
     {
         private static string userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36";
         private static string errorImageUri = "https://upload.wikimedia.org/wikipedia/commons/9/9a/%D0%9D%D0%B5%D1%82_%D1%84%D0%BE%D1%82%D0%BE.png";
-        
-
-        public static void StartParsing(ITelegramBotClient botClient, long userId, DateTime exactTime)
+        public static void StartParsing(ITelegramBotClient botClient, long userId, DateTime userExactTime)
         {
             HtmlWeb web = new HtmlWeb();
-            web.UserAgent = userAgent;
-            
+            DateTime exactTime = userExactTime;
             string userPlatform = DB.GetPlatform(userId);
             string userLink = DB.GetLink(userId);
             string userSellerTotalAds = DB.GetSellerTotalAds(userId);
@@ -29,7 +27,8 @@ namespace Parser
             string blacklist = DB.GetBlackList(userId);
             string parserCategory = DB.GetParserCategory(userId);
             List<string> blacklistCategories = DB.GetUserBlacklistLinks(userId);
-            int timeout = DB.GetTimeout(userId)*1000; 
+            int timeout = DB.GetTimeout(userId)*1000;
+            web.UserAgent = userAgent;
 
             try
             {
@@ -62,6 +61,7 @@ namespace Parser
 
                 }
 
+                List<string> phoneNumbers = new List<string>();
                 List<string> passedLinks = new List<string>();
   
                 while(true)
@@ -69,7 +69,7 @@ namespace Parser
                     try
                     {
                         int page = 1;
-                        ParseCategory(web, botClient, userId, page, passedLinks, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode);
+                        ParseCategory(web, botClient, userId, page, passedLinks, phoneNumbers, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode);
                     }
                     catch{ }
 
@@ -83,7 +83,7 @@ namespace Parser
             }
         }
 
-        private static void ParseCategory(HtmlWeb web, ITelegramBotClient botClient, long userId, int page, List<string> passedLinks, DateTime exactTime, string userPlatform, string userLink, string userSellerTotalAds, string userSellerRegDate, decimal userSellerRating, string userSellerType, string blacklist, string parserCategory, List<string> blacklistCategories, string domen, string currency, string telCode)
+        private static void ParseCategory(HtmlWeb web, ITelegramBotClient botClient, long userId, int page, List<string> passedLinks, List<string> phoneNumbers, DateTime exactTime, string userPlatform, string userLink, string userSellerTotalAds, string userSellerRegDate, decimal userSellerRating, string userSellerType, string blacklist, string parserCategory, List<string> blacklistCategories, string domen, string currency, string telCode)
         {
             string adLink = "";
             string categoryLink = GenerateLink(page, parserCategory, domen, userLink);
@@ -116,7 +116,7 @@ namespace Parser
                                 passedLinks.Add(adLink);
                                 if(!DB.CheckAdvestisement(userId, adLink))
                                 {
-                                    if(!ParsePageInfo(web, botClient, userId, adLink, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode))
+                                    if(!ParsePageInfo(web, botClient, userId, adLink, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode, phoneNumbers))
                                     {
                                         return;
                                     }
@@ -132,11 +132,11 @@ namespace Parser
                     }
                 }
                 page++;
-                ParseCategory(web, botClient, userId, page, passedLinks, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode);
+                ParseCategory(web, botClient, userId, page, passedLinks, phoneNumbers, exactTime, userPlatform, userLink, userSellerTotalAds, userSellerRegDate, userSellerRating, userSellerType, blacklist, parserCategory, blacklistCategories, domen, currency, telCode);
             }
         }
 
-        static bool ParsePageInfo(HtmlWeb web, ITelegramBotClient botClient, long userId, string adLink, DateTime exactTime, string userPlatform, string userLink, string userSellerTotalAds, string userSellerRegDate, decimal userSellerRating, string userSellerType, string blacklist, string parserCategory, List<string> blacklistCategories, string domen, string currency, string telCode)
+        static bool ParsePageInfo(HtmlWeb web, ITelegramBotClient botClient, long userId, string adLink, DateTime exactTime, string userPlatform, string userLink, string userSellerTotalAds, string userSellerRegDate, decimal userSellerRating, string userSellerType, string blacklist, string parserCategory, List<string> blacklistCategories, string domen, string currency, string telCode, List<string> phoneNumbers)
         {
             string adCategory = "";
             string adPrice = "";
@@ -264,10 +264,6 @@ namespace Parser
                 sellerTotalAds = 1;
             }
             
-            Console.WriteLine(userSellerTotalAds);
-            Console.WriteLine("\n");
-            Console.WriteLine(sellerTotalAds);
-            
             if(Functions.CheckSellerTotalAds(userSellerTotalAds, sellerTotalAds)){  }else{ return true; }
 
             
@@ -301,7 +297,7 @@ namespace Parser
             
             Functions.AddToBlacklist(userId, userPlatform!, adLink, sellerLink, sellerPhoneNumber);
 
-            SendLogToTg(botClient, userId, adLink, adTitle, adDescription, adPrice, adLocation, adImage, adRegDate, sellerPhoneNumber, sellerName, sellerLink, sellerTotalAds, sellerRegDate, sellerType);
+            SendLogToTg(botClient, userId, adLink, adTitle, adDescription, adPrice, adLocation, adImage, adRegDate, sellerPhoneNumber, sellerName, sellerLink, sellerTotalAds, sellerRegDate, sellerType, phoneNumbers);
 
             System.Threading.Thread.Sleep(2000);
 
@@ -309,8 +305,10 @@ namespace Parser
         }
 
 
-        static async void SendLogToTg(ITelegramBotClient botClient, long userId, string adLink, string adTitle, string adDescription, string adPrice, string adLocation, string adImage, DateTime adRegDate, string sellerPhoneNumber, string sellerName, string sellerLink, int sellerTotalAds, DateTime sellerRegDate, string sellerType)
+        static async void SendLogToTg(ITelegramBotClient botClient, long userId, string adLink, string adTitle, string adDescription, string adPrice, string adLocation, string adImage, DateTime adRegDate, string sellerPhoneNumber, string sellerName, string sellerLink, int sellerTotalAds, DateTime sellerRegDate, string sellerType, List<string> phoneNumbers)
         {
+            phoneNumbers.Add(sellerPhoneNumber);
+
             adDescription = adDescription.Replace('<', '`').Replace('>', '`').Replace('"', '\"');
             adTitle = adTitle.Replace('<', '`').Replace('>', '`').Replace('"', '\"');
 
@@ -347,8 +345,29 @@ namespace Parser
                     parseMode: ParseMode.Html
                 );
             }
-            
 
+            if(phoneNumbers.Count == 5)
+            {
+                string path = "phones.vcf";
+            
+                using (StreamWriter writer = new StreamWriter(path, false))
+                {
+                    foreach(string phone in phoneNumbers)
+                    {
+                        await writer.WriteLineAsync(phone);
+                    }
+                }
+
+                using (Stream stream = System.IO.File.OpenRead(path))
+                {
+                    await botClient.SendDocumentAsync(
+                        chatId: userId,
+                        document: new InputOnlineFile(content: stream, fileName: path)
+                    );
+                }
+
+                phoneNumbers.Clear();
+            }
             return;
         }
        
