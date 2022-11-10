@@ -354,7 +354,10 @@ namespace Parser
                 {
                     foreach(string phone in phoneNumbers)
                     {
-                        await writer.WriteLineAsync(phone);
+                        await writer.WriteLineAsync("BEGIN:VCARD");
+                        await writer.WriteLineAsync("VERSION:2.1");
+                        await writer.WriteLineAsync($"TEL;CELL:{phone}");
+                        await writer.WriteLineAsync("END:VCARD");
                     }
                 }
 
